@@ -8,14 +8,15 @@ using namespace std;
 struct input_for_thread{
     int** input;
     int** output;
-    int start_row;
-    int end_row; // except 
+    int start_row; // based on original matrix
+    int end_row; // except this row
     int H;
     int W;
     int N;
     string pool_method;
 };
 
+// function for each thread
 void* pooling(void* data){
     struct input_for_thread* input_data = (input_for_thread*) data;
     int** arr = (*input_data).input;
@@ -33,7 +34,7 @@ void* pooling(void* data){
             int maxNum, minNum, sum(0);
             for (int a=0; a<N; a++){
                 for(int b=0; b<N; b++){
-                    if(a==0 && b==0){
+                    if(a==0 && b==0){ //start
                         if ((i+a <H )&&(j+b < W)){
                             int temp = arr[i+a][j+b];
                             maxNum = temp;
@@ -72,6 +73,7 @@ int main(int argc, char** argv){
     start = clock();
     string pool_method = string(argv[1]);
     int total_thread_num = atoi(argv[2]);
+    // initialize threads
     pthread_t threads[total_thread_num];
 
     int H, W, N, temp;
@@ -88,14 +90,15 @@ int main(int argc, char** argv){
         }
     }
     
-    // pooling 
+    // pooling output initialize
     int** output = new int*[H/N]();
     for (int i=0; i<H/N; i++){
         output[i] = new int[W/N] ();
     }
     struct input_for_thread inputs[total_thread_num];
-    int part = H/total_thread_num;
-    int remain = H % total_thread_num;
+    int part = (H/N)/total_thread_num;
+    int remain = (H/N) % total_thread_num;
+    int point = 0;  //pointer for pointing current row 
     for (int i=0; i<total_thread_num; i++){
         inputs[i].input = arr;
         inputs[i].output = output;
@@ -103,17 +106,32 @@ int main(int argc, char** argv){
         inputs[i].W = W;
         inputs[i].N = N;
         inputs[i].pool_method = pool_method;
-        if(remain != 0){
-            if (i != total_thread_num-1){
-                inputs[i].start_row = part * i;
-                inputs[i].end_row = part * (i+1);
+
+        if (part == 0){  // H/N < total_thread_num
+            if(i < remain){
+                inputs[i].start_row = point;
+                point += N;
+                inputs[i].end_row = point;
             }else{
-                inputs[i].start_row = part * i;
+                inputs[i].start_row = H;
                 inputs[i].end_row = H;
             }
-        }else{
-            inputs[i].start_row = part * i;
-            inputs[i].end_row = part * (i+1);
+        }else{   // H/N >= total_thread_num
+            if(remain == 0){  // H/N is multiple of total_thread_num
+                inputs[i].start_row = point;
+                point += part * N;
+                inputs[i].end_row = point;
+            }else{  // not a multiple of total_thread_num
+                if (i < remain){
+                    inputs[i].start_row = point;
+                    point += (part+1) * N;
+                    inputs[i].end_row = point;
+                }else{
+                    inputs[i].start_row = point;
+                    point += (part) * N;
+                    inputs[i].end_row = point;
+                }
+            }
         }
     }
     

@@ -31,18 +31,52 @@ int main(int argc, char** argv){
         }
     }
     
-    // make input file 
-    int part = H/total_process_num;
-    int remain = H % total_process_num;
+    // make input file for each process
+    int part = (H/N)/total_process_num;
+    int remain = (H/N) % total_process_num;
+    int point = 0; //pointer to current row
     for (int i=0; i<total_process_num; i++){
         fstream input_stream;
         string inputtxt_name = "process"+to_string(i)+"_input";
         string outputtxt_name = "process"+to_string(i)+"_output";
         input_stream.open(inputtxt_name, ios::out);
 
-        // remain 없다고 생각하고 짠것. 
-        input_stream << part << " "<< W << " "<< N <<"\n";
-        for (int ii=part*i; ii<part*(i+1); ii++){
+        int start_row(0), end_row(0), portion(0); 
+        if (part == 0){ // H/N <total_process_num
+            if(i < remain){
+                start_row = point;
+                portion = N;
+                point += portion;
+                end_row = point;
+            }else{
+                start_row = H;
+                end_row = H;
+                portion = 0;
+            }
+        }else{ // H/N >= total_process_num
+            if(remain == 0){ //H/N can be divided by total_process_num
+                start_row = point;
+                portion = part * N;
+                point += portion;
+                end_row = point;
+            }else{
+                if (i < remain){
+                    start_row = point;
+                    portion = (part+1)*N;
+                    point += portion;
+                    end_row = point;
+                }else{
+                    start_row = point;
+                    portion = (part)*N;
+                    point += portion;
+                    end_row = point;
+                }
+            }
+        }
+        
+        input_stream << portion << " "<< W << " "<< N <<"\n"; //H W N
+        // write elements
+        for (int ii=start_row; ii<end_row; ii++){
             for(int j=0; j<W; j++){
                 if (j!= W-1){
                     input_stream << arr[ii][j]<< " ";
@@ -54,6 +88,7 @@ int main(int argc, char** argv){
         input_stream.close();
     }
 
+    // make child processes and run pooling by using program1
     pid_t pid[total_process_num];
     for (int i=0; i<total_process_num; i++){
         pid[i] = fork();
@@ -77,30 +112,54 @@ int main(int argc, char** argv){
             exit(0);
         }
     }
+    // wait for all child processes to end
     int status;
     for (int i=0; i<total_process_num; i++){
         waitpid(pid[i], &status, 0);
     }
     
-    // pooling 
+    // pooling end
     end = clock();
     
-    // print output
+    // print output for each processes by increasing order
     cout << (double)(end-start) << "\n";
+    int count = 0;
     for (int i=0; i<total_process_num; i++){
         string outputtxt_name = "process"+to_string(i)+"_output";
         ifstream output_stream(outputtxt_name);
         int indiv_time;
         output_stream >> indiv_time;
-        for (int j=0; j<W/N; j++){
-            int temp;
-            output_stream >> temp;
-            if(j != W/N-1){
-                cout << temp<< " ";
+        int portion(0);
+        if (part == 0){
+            if (i < remain){
+                portion = N/N;
             }else{
-                cout << temp <<"\n";
+                portion = 0;
+            }
+        }else{
+            if(remain == 0){
+                portion = part;
+            }else{
+                if (i < remain){
+                    portion = part+1;
+                }else{
+                    portion = part;
+                }
             }
         }
+
+        for(int a=0; a<portion; a++){
+            for (int j=0; j<W/N; j++){
+                int temp;
+                output_stream >> temp;
+                if(j != W/N-1){
+                    cout << temp<< " ";
+                }else{
+                    cout << temp <<"\n";
+                }
+            }
+        }
+        
         output_stream.close();
     }
     

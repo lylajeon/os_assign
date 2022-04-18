@@ -21,69 +21,43 @@ int main(int argc, char** argv){
     cin >> H >> W >> N;
     
     // initialize 
-    int** arr = new int*[H];
-    for (int i=0; i<H; i++){
-        for (int j=0; j<W; j++){
-            if (j==0) {arr[i] = new int[W];}
-            int temp;
-            cin >> temp;
-            arr[i][j] = temp;
-        }
-    }
+    // int** arr = new int*[H];
+    // for (int i=0; i<H; i++){
+    //     for (int j=0; j<W; j++){
+    //         if (j==0) {arr[i] = new int[W];}
+    //         int temp;
+    //         cin >> temp;
+    //         arr[i][j] = temp;
+    //     }
+    // }
     
     // make input file for each process
-    int part = (H/N)/total_process_num;
+    int quot = (H/N)/total_process_num;
     int remain = (H/N) % total_process_num;
-    int point = 0; //pointer to current row
+    // int point = 0; //pointer to current row
     for (int i=0; i<total_process_num; i++){
         fstream input_stream;
         string inputtxt_name = "process"+to_string(i)+"_input";
         string outputtxt_name = "process"+to_string(i)+"_output";
         input_stream.open(inputtxt_name, ios::out);
 
-        int start_row(0), end_row(0), portion(0); 
-        if (part == 0){ // H/N <total_process_num
-            if(i < remain){
-                start_row = point;
-                portion = N;
-                point += portion;
-                end_row = point;
-            }else{
-                start_row = H;
-                end_row = H;
-                portion = 0;
-            }
-        }else{ // H/N >= total_process_num
-            if(remain == 0){ //H/N can be divided by total_process_num
-                start_row = point;
-                portion = part * N;
-                point += portion;
-                end_row = point;
-            }else{
-                if (i < remain){
-                    start_row = point;
-                    portion = (part+1)*N;
-                    point += portion;
-                    end_row = point;
-                }else{
-                    start_row = point;
-                    portion = (part)*N;
-                    point += portion;
-                    end_row = point;
-                }
-            }
+        int block_num;
+        if (i < remain){
+            block_num = quot +1;
+        }else{
+            block_num = quot;
         }
+        int row_num = block_num * N;
         
-        input_stream << portion << " "<< W << " "<< N <<"\n"; //H W N
+        input_stream << row_num<< " "<< W << " "<< N <<"\n"; //H W N
         // write elements
-        for (int ii=start_row; ii<end_row; ii++){
-            for(int j=0; j<W; j++){
-                if (j!= W-1){
-                    input_stream << arr[ii][j]<< " ";
-                }else{
-                    input_stream << arr[ii][j]<< "\n";
-                }
+        for (int i=0; i<row_num; i++){
+            for (int j=0; j<W; j++){
+                int temp;
+                cin >> temp;
+                input_stream << temp << " ";
             }
+            input_stream <<"\n";
         }
         input_stream.close();
     }
@@ -122,42 +96,27 @@ int main(int argc, char** argv){
     end = clock();
     
     // print output for each processes by increasing order
-    cout << (double)(end-start) << "\n";
+    cout << (long long)(end-start) << "\n";
     int count = 0;
     for (int i=0; i<total_process_num; i++){
         string outputtxt_name = "process"+to_string(i)+"_output";
         ifstream output_stream(outputtxt_name);
-        int indiv_time;
+        double indiv_time;
         output_stream >> indiv_time;
-        int portion(0);
-        if (part == 0){
-            if (i < remain){
-                portion = N/N;
-            }else{
-                portion = 0;
-            }
-        }else{
-            if(remain == 0){
-                portion = part;
-            }else{
-                if (i < remain){
-                    portion = part+1;
-                }else{
-                    portion = part;
-                }
-            }
-        }
 
-        for(int a=0; a<portion; a++){
-            for (int j=0; j<W/N; j++){
-                int temp;
-                output_stream >> temp;
-                if(j != W/N-1){
-                    cout << temp<< " ";
-                }else{
-                    cout << temp <<"\n";
-                }
+        int count = 0;
+        int line;
+        output_stream >> line;
+        while(!output_stream.eof()){
+            if (output_stream.eof()){
+                break;
             }
+            cout << line<< " ";
+            count ++;
+            if (count % (W/N) == 0){
+                cout <<"\n";
+            }
+            output_stream >> line;
         }
         
         output_stream.close();

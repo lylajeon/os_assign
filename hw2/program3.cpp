@@ -152,7 +152,7 @@ int main(int argc, char** argv){
     end = clock();
     
     // print output
-    cout << (double)(end-start) << "\n";
+    cout << (long long)(end-start) << "\n";
     for (int i=0; i<H/N; i++){
         for (int j=0; j<W/N; j++){
             if(j != W/N-1){

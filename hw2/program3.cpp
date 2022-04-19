@@ -69,8 +69,8 @@ void* pooling(void* data){
 }
 
 int main(int argc, char** argv){
-    clock_t start, end;
-    start = clock();
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
     string pool_method = string(argv[1]);
     int total_thread_num = atoi(argv[2]);
     // initialize threads
@@ -149,10 +149,11 @@ int main(int argc, char** argv){
         }
     }
     
-    end = clock();
-    
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    long long runtime = (long long)( (end.tv_sec - start.tv_sec)*1000 + (end.tv_nsec - start.tv_nsec)/1e6);
+
     // print output
-    cout << (long long)(end-start) << "\n";
+    cout << runtime << "\n";
     for (int i=0; i<H/N; i++){
         for (int j=0; j<W/N; j++){
             if(j != W/N-1){

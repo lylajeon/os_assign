@@ -12,24 +12,13 @@
 using namespace std;
 
 int main(int argc, char** argv){
-    clock_t start, end;
-    start = clock();
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
     string pool_method = string(argv[1]);
     int total_process_num = atoi(argv[2]);
 
     int H, W, N, temp;
     cin >> H >> W >> N;
-    
-    // initialize 
-    // int** arr = new int*[H];
-    // for (int i=0; i<H; i++){
-    //     for (int j=0; j<W; j++){
-    //         if (j==0) {arr[i] = new int[W];}
-    //         int temp;
-    //         cin >> temp;
-    //         arr[i][j] = temp;
-    //     }
-    // }
     
     // make input file for each process
     int quot = (H/N)/total_process_num;
@@ -93,30 +82,28 @@ int main(int argc, char** argv){
     }
     
     // pooling end
-    end = clock();
-    
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    long long runtime = (long long)( (end.tv_sec - start.tv_sec)*1000 + (end.tv_nsec - start.tv_nsec)/1e6);
+
     // print output for each processes by increasing order
-    cout << (long long)(end-start) << "\n";
+    cout << runtime << "\n";
+    
     int count = 0;
     for (int i=0; i<total_process_num; i++){
         string outputtxt_name = "process"+to_string(i)+"_output";
         ifstream output_stream(outputtxt_name);
-        double indiv_time;
-        output_stream >> indiv_time;
+        string line;
+        getline(output_stream, line);
 
         int count = 0;
-        int line;
-        output_stream >> line;
+        
+        getline(output_stream, line);
         while(!output_stream.eof()){
             if (output_stream.eof()){
                 break;
             }
-            cout << line<< " ";
-            count ++;
-            if (count % (W/N) == 0){
-                cout <<"\n";
-            }
-            output_stream >> line;
+            cout << line <<endl;
+            getline(output_stream, line);
         }
         
         output_stream.close();
